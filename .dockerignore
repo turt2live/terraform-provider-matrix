@@ -1,0 +1,6 @@
+*
+!.docker
+!*.go
+!Gopkg.*
+!matrix
+!vendor
