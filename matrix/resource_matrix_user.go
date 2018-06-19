@@ -13,7 +13,7 @@ func resourceUser() *schema.Resource {
 		Create: resourceUserCreate,
 		Read:   resourceUserRead,
 		Update: resourceUserUpdate,
-		Delete: resourceUserDelete, // Users cannot be deleted
+		Delete: resourceUserDelete,
 
 		Schema: map[string]*schema.Schema{
 			"username": {
