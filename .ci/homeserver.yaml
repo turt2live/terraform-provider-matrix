@@ -1,0 +1,173 @@
+# This is a test configuration for synapse. It is strongly recommended you do not use this for anything besides
+# testing in a CI environment. It is expected that the homeserver will not be exposed beyond localhost, and therefore
+# will not be able to persist sessions.
+## TLS ##
+
+tls_certificate_path: "/data/localhost.tls.crt"
+tls_private_key_path: "/data/localhost.tls.key"
+tls_dh_params_path: "/data/localhost.tls.dh"
+no_tls: False
+tls_fingerprints: []
+
+## Server ##
+
+server_name: "localhost"
+pid_file: /homeserver.pid
+web_client: False
+soft_file_limit: 0
+
+## Ports ##
+
+listeners:
+
+  -
+    port: 8448
+    bind_addresses: ['0.0.0.0']
+    type: http
+    tls: true
+    x_forwarded: false
+    resources:
+      - names: [client]
+        compress: true
+      - names: [federation]  # Federation APIs
+        compress: false
+
+
+  - port: 8008
+    tls: false
+    bind_addresses: ['0.0.0.0']
+    type: http
+    x_forwarded: false
+
+    resources:
+      - names: [client]
+        compress: true
+      - names: [federation]
+        compress: false
+
+## Database ##
+
+
+database:
+  name: "sqlite3"
+  args:
+    database: "/data/homeserver.db"
+
+
+## Performance ##
+
+event_cache_size: "10K"
+verbose: 0
+log_file: "/data/homeserver.log"
+log_config: "/compiled/log.config"
+
+## Ratelimiting ##
+
+rc_messages_per_second: 0.2
+rc_message_burst_count: 10.0
+federation_rc_window_size: 1000
+federation_rc_sleep_limit: 10
+federation_rc_sleep_delay: 500
+federation_rc_reject_limit: 50
+federation_rc_concurrent: 3
+
+## Files ##
+
+media_store_path: "/data/media"
+uploads_path: "/data/uploads"
+max_upload_size: "10M"
+max_image_pixels: "32M"
+dynamic_thumbnails: false
+
+# List of thumbnail to precalculate when an image is uploaded.
+thumbnail_sizes:
+- width: 32
+  height: 32
+  method: crop
+- width: 96
+  height: 96
+  method: crop
+- width: 320
+  height: 240
+  method: scale
+- width: 640
+  height: 480
+  method: scale
+- width: 800
+  height: 600
+  method: scale
+
+url_preview_enabled: False
+max_spider_size: "10M"
+
+## Captcha ##
+
+
+recaptcha_public_key: "YOUR_PUBLIC_KEY"
+recaptcha_private_key: "YOUR_PRIVATE_KEY"
+enable_registration_captcha: False
+recaptcha_siteverify_api: "https://www.google.com/recaptcha/api/siteverify"
+
+
+## Turn ##
+
+
+turn_uris: []
+turn_shared_secret: "YOUR_SHARED_SECRET"
+turn_user_lifetime: "1h"
+turn_allow_guests: True
+
+
+## Registration ##
+
+enable_registration: True
+registration_shared_secret: "shared-secret-test1234"
+bcrypt_rounds: 12
+allow_guest_access: True
+enable_group_creation: true
+
+# The list of identity servers trusted to verify third party
+# identifiers by this server.
+trusted_third_party_id_servers:
+    - matrix.org
+    - vector.im
+    - riot.im
+
+## Metrics ###
+
+
+enable_metrics: False
+report_stats: False
+
+
+## API Configuration ##
+
+room_invite_state_types:
+    - "m.room.join_rules"
+    - "m.room.canonical_alias"
+    - "m.room.avatar"
+    - "m.room.name"
+
+
+app_service_config_files: []
+
+
+macaroon_secret_key: "macaroon-secret-test1234"
+expire_access_token: False
+
+## Signing Keys ##
+
+signing_key_path: "/data/localhost.signing.key"
+old_signing_keys: {}
+key_refresh_interval: "1d" # 1 Day.
+
+# The trusted servers to download signing keys from.
+perspectives:
+  servers:
+    "matrix.org":
+      verify_keys:
+        "ed25519:auto":
+          key: "Noi6WqcDj0QmPxCNQqgezwTlBKrfqehY1u2FyWP9uYw"
+
+password_config:
+   enabled: true

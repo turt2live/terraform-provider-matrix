@@ -1,13 +1,18 @@
+dist: trusty
 language: go
 go:
   - 1.9
+  - 1.10
 env:
   - DEP_VERSION="0.4.1"
+services:
+  - docker
 before_install:
   - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
   - chmod +x $GOPATH/bin/dep
-  # TODO: Run tests on CI (requires synapse)
 install:
-  - dep ensure
+  - dep ensure -v
 script:
+  - docker build -t terraform-provider-matrix-tests .
+  - docker run --name terraform-provider-matrix-tests terraform-provider-matrix-tests
   - go build -o terraform-provider-matrix

@@ -14,6 +14,7 @@ done
 
 echo "creating admin account"
 register_new_matrix_user -u admin -p test1234 -a -c /compiled/homeserver.yaml http://localhost:8008
+cat /compiled/homeserver.yaml
 access_token=$(curl -s -H 'Content-Type: application/json' --data '{"type":"m.login.password","user":"admin","password":"test1234"}' http://localhost:8008/_matrix/client/r0/login | jq .access_token | tr -d '"')
 export MATRIX_ADMIN_ACCESS_TOKEN=$access_token
 export MATRIX_CLIENT_SERVER_URL="http://localhost:8008"
