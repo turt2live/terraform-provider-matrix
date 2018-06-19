@@ -11,7 +11,7 @@ before_install:
   - chmod +x $GOPATH/bin/dep
 install:
   - dep ensure -v
-script:
   - docker build -t terraform-provider-matrix-tests .
+script:
   - docker run --name terraform-provider-matrix-tests terraform-provider-matrix-tests
   - go build -o terraform-provider-matrix
