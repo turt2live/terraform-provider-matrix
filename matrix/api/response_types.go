@@ -54,3 +54,7 @@ type UiAuthResponse struct {
 type UiAuthFlow struct {
 	Stages []string `json:"stages,flow"`
 }
+
+type ProfileUpdateResponse struct {
+	// There isn't actually anything here
+}

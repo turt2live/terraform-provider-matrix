@@ -22,3 +22,11 @@ type LoginRequest struct {
 	Password string `json:"password,omitempty"`
 	// ... and other parameters we don't care about
 }
+
+type ProfileDisplayNameRequest struct {
+	DisplayName string `json:"displayname,omitempty"`
+}
+
+type ProfileAvatarUrlRequest struct {
+	AvatarMxc string `json:"avatar_url,omitempty"`
+}

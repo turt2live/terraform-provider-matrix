@@ -32,12 +32,12 @@ func resourceUser() *schema.Resource {
 			"display_name": {
 				Type:     schema.TypeString,
 				Computed: true,
-				//Optional: true, // TODO: Support setting display name
+				Optional: true,
 			},
 			"avatar_mxc": {
 				Type:     schema.TypeString,
 				Computed: true,
-				//Optional: true, // TODO: Support setting avatar mxc
+				Optional: true,
 			},
 		},
 	}
@@ -46,12 +46,11 @@ func resourceUser() *schema.Resource {
 func resourceUserCreate(d *schema.ResourceData, m interface{}) error {
 	meta := m.(Metadata)
 
-	usernameRaw := d.Get("username")
-	passwordRaw := d.Get("password")
-	accessTokenRaw := d.Get("access_token")
-	if accessTokenRaw == "" {
-		accessTokenRaw = nil
-	}
+	usernameRaw := nilIfEmptyString(d.Get("username"))
+	passwordRaw := nilIfEmptyString(d.Get("password"))
+	accessTokenRaw := nilIfEmptyString(d.Get("access_token"))
+	displayNameRaw := nilIfEmptyString(d.Get("display_name"))
+	avatarMxcRaw := nilIfEmptyString(d.Get("avatar_mxc"))
 
 	if passwordRaw == nil && accessTokenRaw == nil {
 		return fmt.Errorf("either password or access_token must be supplied")
@@ -101,6 +100,14 @@ func resourceUserCreate(d *schema.ResourceData, m interface{}) error {
 		d.SetId(response.UserId)
 	}
 
+	if displayNameRaw != nil {
+		resourceUserSetDisplayName(d, meta, displayNameRaw.(string))
+	}
+
+	if avatarMxcRaw != nil {
+		resourceUserSetAvatarMxc(d, meta, avatarMxcRaw.(string))
+	}
+
 	return resourceUserRead(d, meta)
 }
 
@@ -139,5 +146,35 @@ func resourceUserUpdate(d *schema.ResourceData, m interface{}) error {
 
 func resourceUserDelete(d *schema.ResourceData, m interface{}) error {
 	// Users cannot be deleted in matrix, so we just say we deleted them
+	return nil
+}
+
+func resourceUserSetDisplayName(d *schema.ResourceData, meta Metadata, newDisplayName string) error {
+	accessToken := d.Get("access_token").(string)
+	userId := d.Id()
+
+	response := &api.ProfileUpdateResponse{}
+	request := &api.ProfileDisplayNameRequest{DisplayName: newDisplayName}
+	urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/profile/", userId, "/displayname")
+	err := api.DoRequest("PUT", urlStr, request, response, accessToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func resourceUserSetAvatarMxc(d *schema.ResourceData, meta Metadata, newAvatarMxc string) error {
+	accessToken := d.Get("access_token").(string)
+	userId := d.Id()
+
+	response := &api.ProfileUpdateResponse{}
+	request := &api.ProfileAvatarUrlRequest{AvatarMxc: newAvatarMxc}
+	urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/profile/", userId, "/avatar_url")
+	err := api.DoRequest("PUT", urlStr, request, response, accessToken)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

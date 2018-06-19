@@ -50,11 +50,19 @@ try logging in.
 resource "matrix_user" "foouser" {
     username = "foouser"
     password = "hunter2"
+    
+    # These properties are optional, and will update the user's profile
+    display_name = "My Cool User"
+    avatar_mxc = "mxc://matrix.org/SomeGeneratedId"
 }
 
 # Access token user
 resource "matrix_user" "baruser" {
     access_token = "MDAxOtherCharactersHere"
+    
+    # These properties are optional, and will update the user's profile
+    display_name = "My Cool User"
+    avatar_mxc = "mxc://matrix.org/SomeGeneratedId"
 }
 ```
 

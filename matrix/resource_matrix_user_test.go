@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/turt2live/terraform-provider-matrix/matrix/api"
 	"github.com/hashicorp/terraform/terraform"
-	"strings"
 	"regexp"
 )
 
@@ -15,26 +14,16 @@ type testAccMatrixUser struct {
 	UserId  string
 }
 
-// TODO: Rename Basic test to be 'username password test'
-// TODO: Test for when password but no username given
-// TODO: Test for when password and access_token given
-// TODO: Test for when no password and no access_token given
-// TODO: Test for when username is taken (should login)
-// TODO: Test for when password is wrong (cannot login)
-// TODO: Test for when the access_token is invalid
-// TODO: Test for when an access_token is given
-// ... and probably other tests
-
 // HACK: This test assumes the localpart (username) becomes the user ID for the user.
 // From the spec: Matrix clients MUST NOT assume that localpart of the registered user_id matches the provided username.
 
-var testAccCheckMatrixUserConfig_basic = fmt.Sprintf(`
+var testAccCheckMatrixUserConfig_usernamePassword = `
 resource "matrix_user" "foobar" {
 	username = "foobar"
 	password = "test1234"
-}`)
+}`
 
-func TestAccMatrixUser_Basic(t *testing.T) {
+func TestAccMatrixUser_UsernamePassword(t *testing.T) {
 	var meta testAccMatrixUser
 
 	resource.Test(t, resource.TestCase{
@@ -44,14 +33,133 @@ func TestAccMatrixUser_Basic(t *testing.T) {
 		//CheckDestroy: testAccCheckMatrixUserDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMatrixUserConfig_basic,
+				Config: testAccCheckMatrixUserConfig_usernamePassword,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMatrixUserExists("matrix_user.foobar", &meta),
-					testAccCheckMatrixUserAttributes(&meta, false, false),
+					testAccCheckMatrixUserIdMatches("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserAccessTokenWorks("matrix_user.foobar", &meta),
 					resource.TestMatchResourceAttr("matrix_user.foobar", "id", regexp.MustCompile("^@foobar:.*")),
+					resource.TestMatchResourceAttr("matrix_user.foobar", "access_token", regexp.MustCompile(".+")),
 					resource.TestCheckResourceAttr("matrix_user.foobar", "username", "foobar"),
 					resource.TestCheckResourceAttr("matrix_user.foobar", "password", "test1234"),
+					// we can't check the display name or avatar url because the homeserver might set it to something
+				),
+			},
+		},
+	})
+}
+
+var testAccCheckMatrixUserConfig_usernamePasswordProfile = `
+resource "matrix_user" "foobar" {
+	username = "foobar"
+	password = "test1234"
+	display_name = "TEST_DISPLAY_NAME"
+	avatar_mxc = "mxc://localhost/FakeAvatar"
+}`
+
+func TestAccMatrixUser_UsernamePasswordProfile(t *testing.T) {
+	var meta testAccMatrixUser
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		// We don't check if users get destroyed because they aren't
+		//CheckDestroy: testAccCheckMatrixUserDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckMatrixUserConfig_usernamePasswordProfile,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMatrixUserExists("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserIdMatches("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserAccessTokenWorks("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserDisplayNameMatches("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserAvatarMxcMatches("matrix_user.foobar", &meta),
+					resource.TestMatchResourceAttr("matrix_user.foobar", "id", regexp.MustCompile("^@foobar:.*")),
 					resource.TestMatchResourceAttr("matrix_user.foobar", "access_token", regexp.MustCompile(".+")),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "username", "foobar"),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "password", "test1234"),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "display_name", "TEST_DISPLAY_NAME"),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "avatar_mxc", "mxc://localhost/FakeAvatar"),
+				),
+			},
+		},
+	})
+}
+
+var testAccCheckMatrixUserConfig_accessToken = `
+resource "matrix_user" "foobar" {
+	access_token = "%s"
+}`
+
+func TestAccMatrixUser_AccessToken(t *testing.T) {
+	var meta testAccMatrixUser
+	testUser := testAccCreateTestUser("test_user_access_token")
+	conf := fmt.Sprintf(testAccCheckMatrixUserConfig_accessToken, testUser.AccessToken)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		// We don't check if users get destroyed because they aren't
+		//CheckDestroy: testAccCheckMatrixUserDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: conf,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMatrixUserExists("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserIdMatches("matrix_user.foobar", &meta),
+					//testAccCheckMatrixUserAccessTokenWorks("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserDisplayNameMatches("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserAvatarMxcMatches("matrix_user.foobar", &meta),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "id", testUser.UserId),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "access_token", testUser.AccessToken),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "display_name", testUser.DisplayName),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "avatar_mxc", testUser.AvatarMxc),
+					resource.TestCheckNoResourceAttr("matrix_user.foobar", "username"),
+					resource.TestCheckNoResourceAttr("matrix_user.foobar", "password"),
+					// we can't check the display name or avatar url because the homeserver might set it to something
+				),
+			},
+		},
+	})
+}
+
+var testAccCheckMatrixUserConfig_accessTokenProfile = `
+resource "matrix_user" "foobar" {
+	access_token = "%s"
+	display_name = "%s"
+	avatar_mxc = "%s"
+}`
+
+func TestAccMatrixUser_AccessTokenProfile(t *testing.T) {
+	var meta testAccMatrixUser
+	testUser := testAccCreateTestUser("test_user_access_token_profile")
+
+	// We cheat and set the properties here to make sure they'll match the checks later on
+	testUser.DisplayName = "TESTING1234"
+	testUser.AvatarMxc = "mxc://localhost/SomeMediaID"
+
+	conf := fmt.Sprintf(testAccCheckMatrixUserConfig_accessTokenProfile, testUser.AccessToken, testUser.DisplayName, testUser.AvatarMxc)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		// We don't check if users get destroyed because they aren't
+		//CheckDestroy: testAccCheckMatrixUserDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: conf,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMatrixUserExists("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserIdMatches("matrix_user.foobar", &meta),
+					//testAccCheckMatrixUserAccessTokenWorks("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserDisplayNameMatches("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserAvatarMxcMatches("matrix_user.foobar", &meta),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "id", testUser.UserId),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "access_token", testUser.AccessToken),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "display_name", testUser.DisplayName),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "avatar_mxc", testUser.AvatarMxc),
+					resource.TestCheckNoResourceAttr("matrix_user.foobar", "username"),
+					resource.TestCheckNoResourceAttr("matrix_user.foobar", "password"),
 					// we can't check the display name or avatar url because the homeserver might set it to something
 				),
 			},
@@ -72,15 +180,12 @@ func testAccCheckMatrixUserExists(n string, user *testAccMatrixUser) resource.Te
 			return fmt.Errorf("record id not set")
 		}
 
-		testUser := &testAccMatrixUser{}
-
 		urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/admin/whois/", rs.Primary.ID)
 		response1 := &api.AdminWhoisResponse{}
 		err := api.DoRequest("GET", urlStr, nil, response1, testAccAdminToken())
 		if err != nil {
 			return err
 		}
-		testUser.UserId = response1.UserId
 
 		urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/profile/", rs.Primary.ID)
 		response2 := &api.ProfileResponse{}
@@ -88,25 +193,104 @@ func testAccCheckMatrixUserExists(n string, user *testAccMatrixUser) resource.Te
 		if err != nil {
 			return err
 		}
-		testUser.Profile = response2
 
-		*user = *testUser
+		*user = testAccMatrixUser{
+			UserId:  response1.UserId,
+			Profile: response2,
+		}
 		return nil
 	}
 }
 
-func testAccCheckMatrixUserAttributes(user *testAccMatrixUser, checkDisplayName bool, checkAvatarUrl bool) resource.TestCheckFunc {
+func testAccCheckMatrixUserIdMatches(n string, user *testAccMatrixUser) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if strings.Index(user.UserId, "@foobar:") != 0 {
-			return fmt.Errorf("bad user id: %s", user.UserId)
+		//meta := testAccProvider.Meta().(Metadata)
+		rs, ok := s.RootModule().Resources[n]
+
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
 		}
 
-		if checkDisplayName && user.Profile.DisplayName != "Baz" {
-			return fmt.Errorf("bad display name: %s", user.Profile.DisplayName)
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("record id not set")
 		}
 
-		if checkAvatarUrl && user.Profile.AvatarMxc != "mxc://demo.site/abc123" {
-			return fmt.Errorf("bad avatar mxc: %s", user.Profile.AvatarMxc)
+		if rs.Primary.ID != user.UserId {
+			return fmt.Errorf("user id doesn't match. expected: %s  got: %s", user.UserId, rs.Primary.ID)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckMatrixUserDisplayNameMatches(n string, user *testAccMatrixUser) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		//meta := testAccProvider.Meta().(Metadata)
+		rs, ok := s.RootModule().Resources[n]
+
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("record id not set")
+		}
+
+		displayNameRaw := nilIfEmptyString(rs.Primary.Attributes["display_name"])
+		if displayNameRaw != user.Profile.DisplayName {
+			return fmt.Errorf("display name doesn't match. exepcted: %s  got: %s", user.Profile.DisplayName, displayNameRaw)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckMatrixUserAvatarMxcMatches(n string, user *testAccMatrixUser) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		//meta := testAccProvider.Meta().(Metadata)
+		rs, ok := s.RootModule().Resources[n]
+
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("record id not set")
+		}
+
+		avatarMxcRaw := nilIfEmptyString(rs.Primary.Attributes["avatar_mxc"])
+		if avatarMxcRaw != user.Profile.AvatarMxc {
+			return fmt.Errorf("display name doesn't match. exepcted: %s  got: %s", user.Profile.AvatarMxc, avatarMxcRaw)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckMatrixUserAccessTokenWorks(n string, user *testAccMatrixUser) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		meta := testAccProvider.Meta().(Metadata)
+		rs, ok := s.RootModule().Resources[n]
+
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("record id not set")
+		}
+
+		accessTokenRaw := nilIfEmptyString(rs.Primary.Attributes["access_token"])
+
+		response := &api.WhoAmIResponse{}
+		urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/account/whoami")
+		err := api.DoRequest("GET", urlStr, nil, response, accessTokenRaw.(string))
+		if err != nil {
+			return fmt.Errorf("error performing whoami: %s", err)
+		}
+
+		if response.UserId != rs.Primary.ID {
+			return fmt.Errorf("whoami succeeded, although the user id does not match. expected: %s  got: %s", rs.Primary.ID, response.UserId)
 		}
 
 		return nil
