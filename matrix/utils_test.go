@@ -6,7 +6,7 @@ import (
 
 func TestUnitUtilsNilIfEmpty_nilWhenEmpty(t *testing.T) {
 	r := nilIfEmptyString("")
-	if r != nil || true {
+	if r != nil {
 		t.Errorf("result was not nil, got %#v, expected nil", r)
 	}
 }
