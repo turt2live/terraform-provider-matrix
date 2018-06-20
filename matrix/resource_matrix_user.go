@@ -10,6 +10,7 @@ import (
 
 func resourceUser() *schema.Resource {
 	return &schema.Resource{
+		Exists: resourceUserExists,
 		Create: resourceUserCreate,
 		Read:   resourceUserRead,
 		Update: resourceUserUpdate,
@@ -109,6 +110,30 @@ func resourceUserCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	return resourceUserRead(d, meta)
+}
+
+func resourceUserExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	meta := m.(Metadata)
+
+	accessToken := d.Get("access_token").(string)
+	log.Printf("[DEBUG] Doing whoami on: %s ", d.Id())
+	urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/account/whoami")
+	response := &api.WhoAmIResponse{}
+	err := api.DoRequest("GET", urlStr, nil, response, accessToken)
+	if err != nil {
+		if mtxErr, ok := err.(*api.ErrorResponse); ok && mtxErr.ErrorCode == api.ErrCodeUnknownToken {
+			// Mark as deleted
+			return false, nil
+		}
+		return true, fmt.Errorf("error performing whoami: %s", err)
+	}
+
+	if response.UserId != d.Id() {
+		// Mark as deleted
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func resourceUserRead(d *schema.ResourceData, m interface{}) error {
