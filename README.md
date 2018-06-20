@@ -35,6 +35,19 @@ docker rm terraform-provider-matrix-tests
 The first execution may take a while to set up, however future executions should be
 fairly quick.
 
+## Usage
+
+The matrix provider is a 3rd party plugin. See the documentation on [3rd party plugins](https://www.terraform.io/docs/configuration/providers.html#third-party-plugins)
+for installation instructions, and download the latest release from the [releases page](https://github.com/turt2live/terraform-provider-matrix/releases).
+
+```hcl
+provider "matrix" {
+    # The client/server URL to access your matrix homeserver with.
+    # Environment variable: MATRIX_CLIENT_SERVER_URL
+    client_server_url = "https://matrix.org"
+}
+```
+
 ## Resources
 
 The following resources are exposed from this provider.
