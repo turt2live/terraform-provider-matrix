@@ -45,12 +45,45 @@ provider "matrix" {
     # The client/server URL to access your matrix homeserver with.
     # Environment variable: MATRIX_CLIENT_SERVER_URL
     client_server_url = "https://matrix.org"
+    
+    # The default access token to use for things like content uploads.
+    # Does not apply for provisioning users.
+    # Environment variable: MATRIX_DEFAULT_ACCESS_TOKEN
+    default_access_token = "MDAxSomeRandomString"
 }
 ```
 
 ## Resources
 
 The following resources are exposed from this provider.
+
+### Media (Content)
+
+Media (referred to as 'content' in the matrix specification) can be uploaded to the matrix content repository for later
+use. Some uses include avatars for users, images in chat, etc. Media can also be existing before entering terraform and
+referenced easily (skipping the upload process). Media cannot be deleted or updated.
+
+Uploading media requires a `default_access_token` to be configured in the provider.
+
+```hcl
+# Existing media 
+resource "matrix_content" "catpic" {
+    # Your MXC URI must fit the following format/example: 
+    #   Format:   mxc://origin/media_id
+    #   Example:  mxc://matrix.org/SomeGeneratedId
+    origin = "matrix.org"
+    media_id = "SomeGeneratedId"
+}
+
+# New media (upload)
+resource "matrix_content" "catpic" {
+    file_path = "/path/to/cat_pic.png"
+    file_name = "cat_pic.png"
+    file_type = "image/png"
+}
+```
+
+All media will have an `origin` and `media_id` as computed properties. To access the complete MXC URI, use the `id`.
 
 ### Users
 
@@ -65,8 +98,9 @@ resource "matrix_user" "foouser" {
     password = "hunter2"
     
     # These properties are optional, and will update the user's profile
+    # We're using a reference to the Media used in an earlier example
     display_name = "My Cool User"
-    avatar_mxc = "mxc://matrix.org/SomeGeneratedId"
+    avatar_mxc = "${matrix_content.catpic.id}"
 }
 
 # Access token user
@@ -74,8 +108,9 @@ resource "matrix_user" "baruser" {
     access_token = "MDAxOtherCharactersHere"
     
     # These properties are optional, and will update the user's profile
+    # We're using a reference to the Media used in an earlier example
     display_name = "My Cool User"
-    avatar_mxc = "mxc://matrix.org/SomeGeneratedId"
+    avatar_mxc = "${matrix_content.catpic.id}"
 }
 ```
 

@@ -45,6 +45,17 @@ func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("MATRIX_ADMIN_ACCESS_TOKEN"); v == "" {
 		t.Fatal("MATRIX_ADMIN_ACCESS_TOKEN must be set for acceptance tests")
 	}
+	if v := os.Getenv("MATRIX_DEFAULT_ACCESS_TOKEN"); v == "" {
+		t.Fatal("MATRIX_DEFAULT_ACCESS_TOKEN must be set for acceptance tests")
+	}
+}
+
+func testAccTestDataDir() string {
+	return os.Getenv("MATRIX_TEST_DATA_DIR")
+}
+
+func testAccClientServerUrl() string {
+	return os.Getenv("MATRIX_CLIENT_SERVER_URL")
 }
 
 func testAccAdminToken() string {

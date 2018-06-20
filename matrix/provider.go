@@ -14,10 +14,17 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("MATRIX_CLIENT_SERVER_URL", nil),
 				Description: "The URL for your matrix homeserver. Eg: https://matrix.org",
 			},
+			"default_access_token": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("MATRIX_DEFAULT_ACCESS_TOKEN", ""),
+				Description: "The default access token to use for miscellaneous requests (media uploads, etc)",
+			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"matrix_user": resourceUser(),
+			"matrix_user":    resourceUser(),
+			"matrix_content": resourceContent(),
 		},
 
 		ConfigureFunc: providerConfigure,
@@ -26,7 +33,8 @@ func Provider() terraform.ResourceProvider {
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config := Metadata{
-		ClientApiUrl: d.Get("client_server_url").(string),
+		ClientApiUrl:       d.Get("client_server_url").(string),
+		DefaultAccessToken: d.Get("default_access_token").(string),
 	}
 
 	return config, nil

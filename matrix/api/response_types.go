@@ -58,3 +58,7 @@ type UiAuthFlow struct {
 type ProfileUpdateResponse struct {
 	// There isn't actually anything here
 }
+
+type ContentUploadResponse struct {
+	ContentMxc string `json:"content_uri"`
+}

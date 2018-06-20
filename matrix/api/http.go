@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"fmt"
+	"io"
 )
 
 var matrixHttpClient = &http.Client{
@@ -26,12 +27,46 @@ func DoRequest(method string, urlStr string, body interface{}, result interface{
 		bodyBytes = jsonStr
 	}
 
+	return doRawRequest(method, urlStr, bodyBytes, "application/json", result, accessToken)
+}
+
+func UploadFile(csApiUrl string, content []byte, name string, mime string, accessToken string) (*ContentUploadResponse, error) {
+	qs := make(map[string]string)
+	if name != "" {
+		qs["filename"] = name
+	}
+	urlStr := MakeUrlQueryString(qs, csApiUrl, "/_matrix/media/r0/upload")
+	result := &ContentUploadResponse{}
+	err := doRawRequest("POST", urlStr, content, mime, result, accessToken)
+	return result, err
+}
+
+func DownloadFile(csApiUrl string, origin string, mediaId string) (*io.ReadCloser, http.Header, error) {
+	urlStr := MakeUrl(csApiUrl, "/_matrix/media/r0/download", origin, mediaId)
+	req, err := http.NewRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	res, err := matrixHttpClient.Do(req)
+	if err != nil {
+		return &res.Body, res.Header, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return &res.Body, res.Header, fmt.Errorf("request failed: status code %d", res.StatusCode)
+	}
+
+	return &res.Body, res.Header, nil
+}
+
+func doRawRequest(method string, urlStr string, bodyBytes []byte, contentType string, result interface{}, accessToken string) (error) {
 	req, err := http.NewRequest(method, urlStr, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return err
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", contentType)
 	if accessToken != "" {
 		req.Header.Set("Authorization", "Bearer "+accessToken)
 	}
