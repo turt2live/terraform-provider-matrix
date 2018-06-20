@@ -17,7 +17,7 @@ type testAccMatrixUser struct {
 // HACK: This test assumes the localpart (username) becomes the user ID for the user.
 // From the spec: Matrix clients MUST NOT assume that localpart of the registered user_id matches the provided username.
 
-var testAccCheckMatrixUserConfig_usernamePassword = `
+var testAccMatrixUserConfig_usernamePassword = `
 resource "matrix_user" "foobar" {
 	username = "foobar"
 	password = "test1234"
@@ -33,7 +33,7 @@ func TestAccMatrixUser_UsernamePassword(t *testing.T) {
 		//CheckDestroy: testAccCheckMatrixUserDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMatrixUserConfig_usernamePassword,
+				Config: testAccMatrixUserConfig_usernamePassword,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMatrixUserExists("matrix_user.foobar", &meta),
 					testAccCheckMatrixUserIdMatches("matrix_user.foobar", &meta),
@@ -49,7 +49,7 @@ func TestAccMatrixUser_UsernamePassword(t *testing.T) {
 	})
 }
 
-var testAccCheckMatrixUserConfig_usernamePasswordProfile = `
+var testAccMatrixUserConfig_usernamePasswordProfile = `
 resource "matrix_user" "foobar" {
 	username = "foobar"
 	password = "test1234"
@@ -67,7 +67,7 @@ func TestAccMatrixUser_UsernamePasswordProfile(t *testing.T) {
 		//CheckDestroy: testAccCheckMatrixUserDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMatrixUserConfig_usernamePasswordProfile,
+				Config: testAccMatrixUserConfig_usernamePasswordProfile,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMatrixUserExists("matrix_user.foobar", &meta),
 					testAccCheckMatrixUserIdMatches("matrix_user.foobar", &meta),
@@ -86,7 +86,7 @@ func TestAccMatrixUser_UsernamePasswordProfile(t *testing.T) {
 	})
 }
 
-var testAccCheckMatrixUserConfig_accessToken = `
+var testAccMatrixUserConfig_accessToken = `
 resource "matrix_user" "foobar" {
 	access_token = "%s"
 }`
@@ -94,7 +94,7 @@ resource "matrix_user" "foobar" {
 func TestAccMatrixUser_AccessToken(t *testing.T) {
 	var meta testAccMatrixUser
 	testUser := testAccCreateTestUser("test_user_access_token")
-	conf := fmt.Sprintf(testAccCheckMatrixUserConfig_accessToken, testUser.AccessToken)
+	conf := fmt.Sprintf(testAccMatrixUserConfig_accessToken, testUser.AccessToken)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -123,7 +123,7 @@ func TestAccMatrixUser_AccessToken(t *testing.T) {
 	})
 }
 
-var testAccCheckMatrixUserConfig_accessTokenProfile = `
+var testAccMatrixUserConfig_accessTokenProfile = `
 resource "matrix_user" "foobar" {
 	access_token = "%s"
 	display_name = "%s"
@@ -138,7 +138,7 @@ func TestAccMatrixUser_AccessTokenProfile(t *testing.T) {
 	testUser.DisplayName = "TESTING1234"
 	testUser.AvatarMxc = "mxc://localhost/SomeMediaID"
 
-	conf := fmt.Sprintf(testAccCheckMatrixUserConfig_accessTokenProfile, testUser.AccessToken, testUser.DisplayName, testUser.AvatarMxc)
+	conf := fmt.Sprintf(testAccMatrixUserConfig_accessTokenProfile, testUser.AccessToken, testUser.DisplayName, testUser.AvatarMxc)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
