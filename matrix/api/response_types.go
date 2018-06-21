@@ -62,3 +62,11 @@ type ProfileUpdateResponse struct {
 type ContentUploadResponse struct {
 	ContentMxc string `json:"content_uri"`
 }
+
+type RoomIdResponse struct {
+	RoomId string `json:"room_id"`
+}
+
+type EventIdResponse struct {
+	EventId string `json:"event_id"`
+}

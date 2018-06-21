@@ -16,8 +16,9 @@ type RegisterAuthenticationData struct {
 
 const LoginTypePassword = "m.login.password"
 const LoginTypeToken = "m.login.token"
+
 type LoginRequest struct {
-	Type string `json:"type"`
+	Type     string `json:"type"`
 	Username string `json:"user,omitempty"`
 	Password string `json:"password,omitempty"`
 	// ... and other parameters we don't care about
@@ -29,4 +30,21 @@ type ProfileDisplayNameRequest struct {
 
 type ProfileAvatarUrlRequest struct {
 	AvatarMxc string `json:"avatar_url,omitempty"`
+}
+
+type CreateRoomRequest struct {
+	Visibility      string                 `json:"visibility,omitempty"`
+	AliasLocalpart  string                 `json:"room_alias_name,omitempty"`
+	InviteUserIds   []string               `json:"invite,flow,omitempty"`
+	CreationContent map[string]interface{} `json:"creation_content,omitempty"`
+	InitialState    []CreateRoomStateEvent `json:"initial_state,flow,omitempty"`
+	Preset          string                 `json:"preset,omitempty"`
+	IsDirect        bool                   `json:"is_direct"`
+	AllowGuests     bool                   `json:"guests_can_join"`
+}
+
+type CreateRoomStateEvent struct {
+	Type     string      `json:"type"`
+	StateKey string      `json:"state_key"`
+	Content  interface{} `json:"interface"`
 }
