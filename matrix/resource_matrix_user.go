@@ -5,7 +5,6 @@ import (
 	"github.com/turt2live/terraform-provider-matrix/matrix/api"
 	"log"
 	"fmt"
-	"errors"
 )
 
 func resourceUser() *schema.Resource {
@@ -20,15 +19,18 @@ func resourceUser() *schema.Resource {
 			"username": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 			},
 			"password": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true, // The api is just way too complicated for us to implement
 			},
 			"access_token": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
+				ForceNew: true,
 			},
 			"display_name": {
 				Type:     schema.TypeString,
@@ -163,10 +165,25 @@ func resourceUserRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceUserUpdate(d *schema.ResourceData, m interface{}) error {
-	// TODO: Change password
-	// TODO: Change display name
-	// TODO: Change avatar mxc
-	return errors.New("not implemented")
+	meta := m.(Metadata)
+
+	if d.HasChange("avatar_mxc") {
+		newMxc := d.Get("avatar_mxc").(string)
+		err := resourceUserSetAvatarMxc(d, meta, newMxc)
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("display_name") {
+		newName := d.Get("display_name").(string)
+		err := resourceUserSetDisplayName(d, meta, newName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return resourceUserRead(d, meta)
 }
 
 func resourceUserDelete(d *schema.ResourceData, m interface{}) error {

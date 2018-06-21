@@ -116,7 +116,6 @@ func TestAccMatrixUser_AccessToken(t *testing.T) {
 					resource.TestCheckResourceAttr("matrix_user.foobar", "avatar_mxc", testUser.AvatarMxc),
 					resource.TestCheckNoResourceAttr("matrix_user.foobar", "username"),
 					resource.TestCheckNoResourceAttr("matrix_user.foobar", "password"),
-					// we can't check the display name or avatar url because the homeserver might set it to something
 				),
 			},
 		},
@@ -160,7 +159,75 @@ func TestAccMatrixUser_AccessTokenProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("matrix_user.foobar", "avatar_mxc", testUser.AvatarMxc),
 					resource.TestCheckNoResourceAttr("matrix_user.foobar", "username"),
 					resource.TestCheckNoResourceAttr("matrix_user.foobar", "password"),
-					// we can't check the display name or avatar url because the homeserver might set it to something
+				),
+			},
+		},
+	})
+}
+
+var testAccMatrixUserConfig_updateProfile = `
+resource "matrix_user" "foobar" {
+	access_token = "%s"
+	display_name = "%s"
+	avatar_mxc = "%s"
+}`
+
+func TestAccMatrixUser_UpdateProfile(t *testing.T) {
+	var meta testAccMatrixUser
+	originalUser := testAccCreateTestUser("test_user_update_profile")
+
+	// We cheat and set the properties here to make sure they'll match the checks later on
+	originalUser.DisplayName = "TESTING1234"
+	originalUser.AvatarMxc = "mxc://localhost/SomeMediaID"
+
+	updatedUser := &test_MatrixUser{
+		UserId:      originalUser.UserId,
+		AvatarMxc:   "mxc://localhost/SomeOtherMediaId",
+		DisplayName: "New Display Name",
+		AccessToken: originalUser.AccessToken,
+		Localpart:   originalUser.Localpart,
+		Password:    originalUser.Password,
+	}
+
+	confPart1 := fmt.Sprintf(testAccMatrixUserConfig_updateProfile, originalUser.AccessToken, originalUser.DisplayName, originalUser.AvatarMxc)
+	confPart2 := fmt.Sprintf(testAccMatrixUserConfig_updateProfile, updatedUser.AccessToken, updatedUser.DisplayName, updatedUser.AvatarMxc)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		// We don't check if users get destroyed because they aren't
+		//CheckDestroy: testAccCheckMatrixUserDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: confPart1,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMatrixUserExists("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserIdMatches("matrix_user.foobar", &meta),
+					//testAccCheckMatrixUserAccessTokenWorks("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserDisplayNameMatches("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserAvatarMxcMatches("matrix_user.foobar", &meta),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "id", originalUser.UserId),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "access_token", originalUser.AccessToken),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "display_name", originalUser.DisplayName),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "avatar_mxc", originalUser.AvatarMxc),
+					resource.TestCheckNoResourceAttr("matrix_user.foobar", "username"),
+					resource.TestCheckNoResourceAttr("matrix_user.foobar", "password"),
+				),
+			},
+			{
+				Config: confPart2,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMatrixUserExists("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserIdMatches("matrix_user.foobar", &meta),
+					//testAccCheckMatrixUserAccessTokenWorks("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserDisplayNameMatches("matrix_user.foobar", &meta),
+					testAccCheckMatrixUserAvatarMxcMatches("matrix_user.foobar", &meta),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "id", updatedUser.UserId),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "access_token", updatedUser.AccessToken),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "display_name", updatedUser.DisplayName),
+					resource.TestCheckResourceAttr("matrix_user.foobar", "avatar_mxc", updatedUser.AvatarMxc),
+					resource.TestCheckNoResourceAttr("matrix_user.foobar", "username"),
+					resource.TestCheckNoResourceAttr("matrix_user.foobar", "password"),
 				),
 			},
 		},
