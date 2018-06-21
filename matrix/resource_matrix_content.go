@@ -9,14 +9,12 @@ import (
 	"os"
 )
 
-// TODO: Acceptance tests: OnChange
-
 func resourceContent() *schema.Resource {
 	return &schema.Resource{
 		Exists: resourceContentExists,
 		Create: resourceContentCreate,
 		Read:   resourceContentRead,
-		Update: resourceContentUpdate,
+		//Update: resourceContentUpdate, // We can't update media, and everything is ForceNew
 		Delete: resourceContentDelete,
 
 		Schema: map[string]*schema.Schema{
@@ -24,23 +22,28 @@ func resourceContent() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
+				ForceNew: true,
 			},
 			"media_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
+				ForceNew: true,
 			},
 			"file_path": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 			},
 			"file_type": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 			},
 			"file_name": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 			},
 		},
 	}
@@ -150,39 +153,12 @@ func resourceContentExists(d *schema.ResourceData, m interface{}) (bool, error) 
 }
 
 func resourceContentRead(d *schema.ResourceData, m interface{}) error {
-	// Nothing to do
-	return nil
-}
-
-func resourceContentUpdate(d *schema.ResourceData, m interface{}) error {
-	// There's nothing we can actually update
-	// TODO: When the MXC changes, update the resource ID and other props
-	// TODO: Are we able to detect changes to the bytes, etc and throw an error on that?
-	// ... or do we just force a new resource?
-
-	/*
-		// Enable partial state mode
-        d.Partial(true)
-
-        if d.HasChange("address") {
-                // Try updating the address
-                if err := updateAddress(d, m); err != nil {
-                        return err
-                }
-
-                d.SetPartial("address")
-        }
-
-        // If we were to return here, before disabling partial mode below,
-        // then only the "address" field would be saved.
-
-        // We succeeded, disable partial mode. This causes Terraform to save
-        // all fields again.
-        d.Partial(false)
-
-        return nil
-	 */
-
+	filePathRaw := nilIfEmptyString(d.Get("file_path"))
+	if filePathRaw == nil {
+		d.Set("file_path", "")
+		d.Set("file_type", "")
+		d.Set("file_name", "")
+	}
 	return nil
 }
 
