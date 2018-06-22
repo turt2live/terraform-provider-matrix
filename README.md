@@ -65,6 +65,8 @@ referenced easily (skipping the upload process). Media cannot be deleted or upda
 
 Uploading media requires a `default_access_token` to be configured in the provider.
 
+*Note*: Media cannot be deleted and is therefore abandoned when deleted in Terraform.
+
 ```hcl
 # Existing media 
 resource "matrix_content" "catpic" {
@@ -91,6 +93,8 @@ Users can either be created using a username and password or by providing an acc
 and password will first be registered on the homeserver, and if the username appears to be in use then the provider will
 try logging in.
 
+*Note*: Users cannot be deleted and are therefore abandoned when deleted in Terraform.
+
 ```hcl
 # Username/password user
 resource "matrix_user" "foouser" {
@@ -115,3 +119,39 @@ resource "matrix_user" "baruser" {
 ```
 
 All users have a `display_name`, `avatar_mxc`, and `access_token` as computed properties.
+
+### Rooms
+
+Rooms can be created by either specifying an explicit `room_id` or by specifying properties that help make up the room's
+configuration for a new room. In both cases, a `member_access_token` is required because the provider needs an insight
+into the room to perform state checks.
+
+*Note*: Rooms cannot be completely deleted in matrix. When Terraform deletes a room, this provider will try to make the
+room as inaccessible as possible. That generally means ensuring the `join_rules` are set to `private`, everyone is kicked,
+aliases are removed, and the creator removes themselves from the room. For this reason, it is recommended that the member's
+access token in the resource configuration be of at least power level 100 (Admin).
+
+The examples here build off of previously mentioned resources, such as Users and Media.
+
+```hcl
+# Already existing room
+resource "matrix_room" "fooroom" {
+    room_id = "!somewhere:domain.com"
+    member_access_token = "${matrix_user.foouser.access_token}"
+}
+
+# New room
+resource "matrix_room" "barroom" {
+    creator_user_id = "${matrix_user.foouser.id}"
+    member_access_token = "${matrix_user.foouser.access_token}"
+    
+    # The rest is optional
+    name = "My Room"
+    avatar_mxc = "${matrix_content.catpic.id}"
+    topic = "For testing only please"
+    preset = "public_chat"
+    guests_allowed = true
+    invite_user_ids = ["${matrix_user.baruser.id}"]
+    local_alias_localpart = "myroom"
+}
+```
