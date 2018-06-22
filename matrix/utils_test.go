@@ -2,6 +2,7 @@ package matrix
 
 import (
 	"testing"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func TestUnitUtilsNilIfEmpty_nilWhenEmpty(t *testing.T) {
@@ -131,5 +132,50 @@ func TestUnitUtilsStripMxc_errMissingSegments(t *testing.T) {
 
 	if err.Error() != "invalid mxc: wrong number of segments. expected: 2  got: 1" {
 		t.Errorf("unexpected error message, got: %s  expected: %s", err, "invalid mxc: wrong number of segments. expected: 2  got: 1")
+	}
+}
+
+func TestUnitUtilsSetOfStrings_producesStringArray(t *testing.T) {
+	input := []interface{}{"A", "B", "C"}
+	set := schema.NewSet(schema.HashString, input)
+	result := setOfStrings(set)
+
+	if result == nil {
+		t.Errorf("result is nil")
+	}
+
+	if len(result) != len(input) {
+		t.Errorf("unexpected length. expected: %d  got: %d", len(input), len(result))
+	}
+
+	// Sets are unordered, so we have to confirm the contents exist
+	found := make([]bool, len(input))
+	for i, expected := range input {
+		for _, actual := range result {
+			if expected == actual {
+				alreadyFound := found[i]
+				if alreadyFound {
+					t.Errorf("duplicate entry discovered at index %d of source", i)
+				}
+				found[i] = true
+			}
+		}
+	}
+	for i, v := range found {
+		if !v {
+			t.Errorf("failed to find index %d of source in result", i)
+		}
+	}
+}
+
+func TestUnitUtilsSetOfStrings_emptyWhenNil(t *testing.T) {
+	result := setOfStrings(nil)
+
+	if result == nil {
+		t.Errorf("result is nil")
+	}
+
+	if len(result) != 0 {
+		t.Errorf("unexpected length. expected: %d  got: %d", 0, len(result))
 	}
 }

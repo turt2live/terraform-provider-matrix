@@ -21,3 +21,11 @@ type RoomMemberEventContent struct {
 type RoomGuestAccessEventContent struct {
 	Policy string `json:"guest_access"`
 }
+
+type RoomCreateEventContent struct {
+	CreatorUserId string `json:"creator"`
+}
+
+type RoomJoinRulesEventContent struct {
+	Policy string `json:"join_rule"`
+}

@@ -70,3 +70,8 @@ type RoomIdResponse struct {
 type EventIdResponse struct {
 	EventId string `json:"event_id"`
 }
+
+type RoomDirectoryLookupResponse struct {
+	RoomId  string `json:"room_id"`
+	Servers []string `json:"servers,flow"`
+}

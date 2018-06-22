@@ -25,6 +25,7 @@ func Provider() terraform.ResourceProvider {
 		ResourcesMap: map[string]*schema.Resource{
 			"matrix_user":    resourceUser(),
 			"matrix_content": resourceContent(),
+			"matrix_room":    resourceRoom(),
 		},
 
 		ConfigureFunc: providerConfigure,

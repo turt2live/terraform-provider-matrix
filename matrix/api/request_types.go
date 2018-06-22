@@ -40,11 +40,10 @@ type CreateRoomRequest struct {
 	InitialState    []CreateRoomStateEvent `json:"initial_state,flow,omitempty"`
 	Preset          string                 `json:"preset,omitempty"`
 	IsDirect        bool                   `json:"is_direct"`
-	AllowGuests     bool                   `json:"guests_can_join"`
 }
 
 type CreateRoomStateEvent struct {
 	Type     string      `json:"type"`
 	StateKey string      `json:"state_key"`
-	Content  interface{} `json:"interface"`
+	Content  interface{} `json:"content"`
 }
