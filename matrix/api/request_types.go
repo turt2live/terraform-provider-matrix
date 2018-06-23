@@ -47,3 +47,8 @@ type CreateRoomStateEvent struct {
 	StateKey string      `json:"state_key"`
 	Content  interface{} `json:"content"`
 }
+
+type KickRequest struct {
+	UserId string `json:"user_id"`
+	Reason string `json:"reason,omitempty"`
+}

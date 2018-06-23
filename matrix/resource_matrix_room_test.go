@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"regexp"
 	"net/http"
-	"strings"
 	"net/url"
 )
 
@@ -449,20 +448,16 @@ func testAccCheckMatrixRoomLocalAliasMatches(n string, aliasLocalpart string, cr
 		// We're forced to do an estimation on what the full alias will look like, so we try and get the
 		// homeserver domain from the creator's user ID. This is bad practice, however most of the tests
 		// will be run on localhost anyways, making this check not so bad.
-		idParts := strings.Split(creatorUserId, ":")
-		if len(idParts) != 2 && len(idParts) != 3 {
-			return fmt.Errorf("illegal matrix user id: %s", creatorUserId)
-		}
-		hsDomain := idParts[1]
-		if len(idParts) > 2 { // port
-			hsDomain = fmt.Sprintf("%s:%s", hsDomain, idParts[2])
+		hsDomain, err := getDomainName(creatorUserId)
+		if err != nil {
+			return fmt.Errorf("error parsing creator user id: %s", err)
 		}
 		fullAlias := fmt.Sprintf("#%s:%s", aliasLocalpart, hsDomain)
 		safeAlias := url.QueryEscape(fullAlias)
 
 		response := &api.RoomDirectoryLookupResponse{}
 		urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/directory/room/", safeAlias)
-		err := api.DoRequest("GET", urlStr, nil, response, memberAccessToken)
+		err = api.DoRequest("GET", urlStr, nil, response, memberAccessToken)
 		if err != nil {
 			return fmt.Errorf("error querying alias: %s", err)
 		}

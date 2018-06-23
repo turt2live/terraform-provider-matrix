@@ -72,6 +72,10 @@ type EventIdResponse struct {
 }
 
 type RoomDirectoryLookupResponse struct {
-	RoomId  string `json:"room_id"`
+	RoomId  string   `json:"room_id"`
 	Servers []string `json:"servers,flow"`
+}
+
+type RoomMembersResponse struct {
+	Chunk []RoomMemberEvent `json:"chunk,flow"`
 }

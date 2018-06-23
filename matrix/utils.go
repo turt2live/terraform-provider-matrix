@@ -47,3 +47,16 @@ func setOfStrings(val *schema.Set) []string {
 
 	return res
 }
+
+func getDomainName(identifier string) (string, error) {
+	idParts := strings.Split(identifier, ":")
+	if len(idParts) != 2 && len(idParts) != 3 {
+		return "", fmt.Errorf("illegal matrix identifier: %s", identifier)
+	}
+	hsDomain := idParts[1]
+	if len(idParts) > 2 { // port
+		hsDomain = fmt.Sprintf("%s:%s", hsDomain, idParts[2])
+	}
+
+	return hsDomain, nil
+}

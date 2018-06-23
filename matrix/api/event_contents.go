@@ -29,3 +29,7 @@ type RoomCreateEventContent struct {
 type RoomJoinRulesEventContent struct {
 	Policy string `json:"join_rule"`
 }
+
+type RoomAliasesEventContent struct {
+	Aliases []string `json:"aliases,flow"`
+}

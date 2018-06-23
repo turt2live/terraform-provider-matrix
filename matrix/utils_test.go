@@ -179,3 +179,71 @@ func TestUnitUtilsSetOfStrings_emptyWhenNil(t *testing.T) {
 		t.Errorf("unexpected length. expected: %d  got: %d", 0, len(result))
 	}
 }
+
+func TestUnitUtilsGetDomainName_parsesUserId(t *testing.T) {
+	result, err := getDomainName("@user:domain.com")
+
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	if result != "domain.com" {
+		t.Errorf("expected: %s  got: %s", "domain.com", result)
+	}
+}
+
+func TestUnitUtilsGetDomainName_parsesGroupId(t *testing.T) {
+	result, err := getDomainName("+group:domain.com")
+
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	if result != "domain.com" {
+		t.Errorf("expected: %s  got: %s", "domain.com", result)
+	}
+}
+
+func TestUnitUtilsGetDomainName_parsesAlias(t *testing.T) {
+	result, err := getDomainName("#room:domain.com")
+
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	if result != "domain.com" {
+		t.Errorf("expected: %s  got: %s", "domain.com", result)
+	}
+}
+
+func TestUnitUtilsGetDomainName_parsesPortNumber(t *testing.T) {
+	result, err := getDomainName("#room:domain.com:8182")
+
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	if result != "domain.com:8182" {
+		t.Errorf("expected: %s  got: %s", "domain.com:8182", result)
+	}
+}
+
+func TestUnitUtilsGetDomainName_parsesWithoutTld(t *testing.T) {
+	result, err := getDomainName("#room:localhost")
+
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	if result != "localhost" {
+		t.Errorf("expected: %s  got: %s", "localhost", result)
+	}
+}
+
+func TestUnitUtilsGetDomainName_errorWhenInvalid(t *testing.T) {
+	_, err := getDomainName("#room")
+
+	if err == nil {
+		t.Errorf("expected an error, but got a result")
+	}
+}

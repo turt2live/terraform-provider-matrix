@@ -105,7 +105,7 @@ func resourceRoomCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if hasCreator {
-		log.Printf("[DEBUG] Creating room")
+		log.Println("[DEBUG] Creating room")
 		request := &api.CreateRoomRequest{
 			Preset:         presetRaw,
 			AliasLocalpart: aliasLocalpartRaw,
@@ -171,7 +171,7 @@ func resourceRoomExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	}
 
 	// First identify who the user is
-	log.Printf("[DEBUG] Doing whoami on: %s ", d.Id())
+	log.Println("[DEBUG] Doing whoami on: ", d.Id())
 	urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/account/whoami")
 	whoAmIResponse := &api.WhoAmIResponse{}
 	err := api.DoRequest("GET", urlStr, nil, whoAmIResponse, memberAccessToken)
