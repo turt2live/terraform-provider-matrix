@@ -24,7 +24,7 @@ cd /project/src/github.com/turt2live/terraform-provider-matrix
 cp -rv .test_data /tmp/.test_data
 export MATRIX_TEST_DATA_DIR="/tmp"
 export TF_ACC=true
-#export TF_LOG=DEBUG
+#export TF_LOG=DEBUG  # Set by the environment variables in the command line
 #rm -rf vendor
 #dep ensure -v -vendor-only
 
