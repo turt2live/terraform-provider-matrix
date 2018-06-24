@@ -6,6 +6,7 @@ import (
 	"log"
 	"github.com/turt2live/terraform-provider-matrix/matrix/api"
 	"net/http"
+	"net/url"
 )
 
 func resourceRoom() *schema.Resource {
@@ -323,16 +324,115 @@ func resourceRoomUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceRoomDelete(d *schema.ResourceData, m interface{}) error {
+	meta := m.(Metadata)
+
+	memberAccessToken := d.Get("member_access_token").(string)
+	roomId := nilIfEmptyString(d.Get("room_id")).(string)
+
+	log.Println("[DEBUG] Performing whoami on member access token")
+	urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/account/whoami")
+	whoAmIResponse := &api.WhoAmIResponse{}
+	err := api.DoRequest("GET", urlStr, nil, whoAmIResponse, memberAccessToken)
+	if err != nil {
+		return fmt.Errorf("error performing whoami: %s", err)
+	}
+	hsDomain, err := getDomainName(whoAmIResponse.UserId)
+	if err != nil {
+		return fmt.Errorf("error parsing user id: %s", err)
+	}
+
 	// Rooms cannot technically be deleted, so we just abandon them instead
 	// Abandoning means kicking everyone and leaving it to rot away. Before we leave though, we'll make sure no one can
 	// get back in.
 
-	// TODO: Remove aliases
-	// TODO: Set invite only
-	// TODO: Disable guest access
-	// TODO: Close history to members only
-	// TODO: Kick everyone
-	// TODO: Leave
+	// First step: remove all local aliases (by fetching them first, then deleting them)
+	aliasesResponse := &api.RoomAliasesEventContent{}
+	urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomId, "/state/m.room.aliases/", hsDomain)
+	log.Println("[DEBUG] Getting room aliases:", urlStr)
+	err = api.DoRequest("GET", urlStr, nil, aliasesResponse, memberAccessToken)
+	if err != nil {
+		if mtxErr, ok := err.(*api.ErrorResponse); !ok || mtxErr.ErrorCode != api.ErrCodeNotFound {
+			return fmt.Errorf("error getting room aliases: %s", err)
+		}
 
+		// We got a 404 on the event, so we'll just fake it and say we got no aliases
+		aliasesResponse.Aliases = make([]string, 0)
+	}
+	for _, alias := range aliasesResponse.Aliases {
+		urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/directory/room/", url.QueryEscape(alias))
+		log.Println("[DEBUG] Deleting room alias:", urlStr)
+		err = api.DoRequest("DELETE", urlStr, nil, nil, memberAccessToken)
+		if err != nil {
+			return fmt.Errorf("failed to delete alias %s: %s", alias, err)
+		}
+	}
+
+	// Set the room to invite only
+	joinRulesRequest := &api.RoomJoinRulesEventContent{Policy: "invite"}
+	urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomId, "/state/m.room.join_rules")
+	log.Println("[DEBUG] Setting join rules:", urlStr)
+	err = api.DoRequest("PUT", urlStr, joinRulesRequest, nil, memberAccessToken)
+	if err != nil {
+		return fmt.Errorf("error setting join rules to invite only: %s", err)
+	}
+
+	// Disable guest access
+	guestAccessRequest := &api.RoomGuestAccessEventContent{Policy: "forbidden"}
+	urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomId, "/state/m.room.guest_access")
+	log.Println("[DEBUG] Disabling guest access:", urlStr)
+	err = api.DoRequest("PUT", urlStr, guestAccessRequest, nil, memberAccessToken)
+	if err != nil {
+		return fmt.Errorf("error disabling guest access: %s", err)
+	}
+
+	// Kick everyone
+	membersResponse := &api.RoomMembersResponse{}
+	urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomId, "/members")
+	log.Println("[DEBUG] Getting room members:", urlStr)
+	err = api.DoRequest("GET", urlStr, nil, membersResponse, memberAccessToken)
+	if err != nil {
+		return fmt.Errorf("error getting membership list: %s", err)
+	}
+	for _, member := range membersResponse.Chunk {
+		if member.Content == nil {
+			return fmt.Errorf("member %s has no content in their member event", member.StateKey)
+		}
+
+		if member.StateKey == whoAmIResponse.UserId {
+			// We don't to kick ourselves yet
+			continue
+		}
+
+		if member.Content.Membership == "invite" || member.Content.Membership == "join" {
+			kickRequest := &api.KickRequest{
+				UserId: member.StateKey,
+				Reason: "This room is being deleted in Terraform",
+			}
+			urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomId, "/kick")
+			log.Println("[DEBUG] Kicking", kickRequest.UserId, ": ", urlStr)
+			err = api.DoRequest("POST", urlStr, kickRequest, nil, memberAccessToken)
+			if err != nil {
+				return fmt.Errorf("error kicking %s: %s", member.StateKey, err)
+			}
+		}
+	}
+
+	// Leave (forget) the room
+	// The spec says we should be able to forget and have that leave us, however this isn't what synapse
+	// does in practice: https://github.com/matrix-org/matrix-doc/issues/1011
+	urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomId, "/leave")
+	log.Println("[DEBUG] Leaving room:", urlStr)
+	err = api.DoRequest("POST", urlStr, nil, nil, memberAccessToken)
+	if err != nil {
+		return fmt.Errorf("error leaving the room: %s", err)
+	}
+	urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomId, "/forget")
+	log.Println("[DEBUG] Forgetting room:", urlStr)
+	err = api.DoRequest("POST", urlStr, nil, nil, memberAccessToken)
+	if err != nil {
+		return fmt.Errorf("error forgetting the room: %s", err)
+	}
+
+	// Note: We can't do anything about the room's history, so we leave that untouched.
 	return nil
 }

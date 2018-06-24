@@ -239,7 +239,27 @@ func TestAccMatrixRoom_LocalAlias(t *testing.T) {
 }
 
 func testAccCheckMatrixRoomDestroy(s *terraform.State) error {
-	// TODO: Check that the room was ""deleted""
+	meta := testAccProvider.Meta().(Metadata)
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "matrix_room" {
+			continue
+		}
+
+		// We'll try joining the room to ensure we can't get in. We won't be able to verify a lot of the state events,
+		// however not being able to get in is a good indicator that the room is abandoned.
+		urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", rs.Primary.ID, "/join")
+		err := api.DoRequest("POST", urlStr, nil, nil, rs.Primary.Attributes["member_access_token"])
+		if err == nil {
+			return fmt.Errorf("lack of error when deleting room")
+		} else {
+			// HACK: We rely on the string error code when we should have an error code.
+			// https://github.com/matrix-org/matrix-doc/issues/1338
+			if r, ok := err.(*api.ErrorResponse); !ok || r.StatusCode != http.StatusNotFound || r.Message != "No known servers" {
+				return fmt.Errorf("error ensuring room is not joinable: %s", err)
+			}
+		}
+	}
+
 	return nil
 }
 
