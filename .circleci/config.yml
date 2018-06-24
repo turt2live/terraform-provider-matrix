@@ -5,8 +5,6 @@ jobs:
       - DEP_VERSION: 0.4.1
       - ARCH: linux-amd64
       - GOARCH: amd64
-    branches:
-      only: [master, develop]
     docker:
       - image: circleci/golang:1.10
     working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
@@ -22,8 +20,6 @@ jobs:
       - DEP_VERSION: 0.4.1
       - ARCH: linux-386
       - GOARCH: 386
-    branches:
-      only: [master, develop]
     docker:
       - image: circleci/golang:1.10
     working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
