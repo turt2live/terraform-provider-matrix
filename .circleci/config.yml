@@ -7,12 +7,12 @@ jobs:
       - GOARCH: amd64
     docker:
       - image: circleci/golang:1.10
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/turt2live/terraform-provider-matrix
     steps:
       - checkout
       - run: curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
       - run: chmod +x $GOPATH/bin/dep
-      - run: go build -o terraform-provider-matrix-${ARCH}
+      - run: go build -o bin/terraform-provider-matrix-${ARCH}
       - store_artifacts:
           path: bin/
   build_linux_386:
@@ -28,7 +28,7 @@ jobs:
       - run: curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
       - run: chmod +x $GOPATH/bin/dep
       - run: dep ensure -v
-      - run: go build -o terraform-provider-matrix-${ARCH}
+      - run: go build -o bin/terraform-provider-matrix-${ARCH}
       - store_artifacts:
           path: bin/
 workflows:
