@@ -3,8 +3,8 @@ language: go
 go:
   - 1.9
 env:
-  - DEP_VERSION="0.4.1"
-  - TF_LOG=DEBUG  # We want to make sure we have as much information as possible when the tests explode
+  # We want to make sure we have as much information as possible when the tests explode
+  - DEP_VERSION="0.4.1" TF_LOG=DEBUG
 services:
   - docker
 before_install:
