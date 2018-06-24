@@ -106,7 +106,7 @@ func resourceRoomCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if hasCreator {
-		log.Println("[DEBUG] Creating room")
+		log.Println("[DEBUG] Room creator set, creating room")
 		request := &api.CreateRoomRequest{
 			Preset:         presetRaw,
 			AliasLocalpart: aliasLocalpartRaw,
@@ -115,29 +115,34 @@ func resourceRoomCreate(d *schema.ResourceData, m interface{}) error {
 
 		stateEvents := make([]api.CreateRoomStateEvent, 0)
 		if nameRaw != nil {
+			log.Println("[DEBUG] Including room name state event")
 			stateEvents = append(stateEvents, api.CreateRoomStateEvent{
 				Type:    "m.room.name",
 				Content: api.RoomNameEventContent{Name: nameRaw.(string)},
 			})
 		}
 		if avatarMxcRaw != nil {
+			log.Println("[DEBUG] Including room avatar state event")
 			stateEvents = append(stateEvents, api.CreateRoomStateEvent{
 				Type:    "m.room.avatar",
 				Content: api.RoomAvatarEventContent{AvatarMxc: avatarMxcRaw.(string)},
 			})
 		}
 		if topicRaw != nil {
+			log.Println("[DEBUG] Including room topic state event")
 			stateEvents = append(stateEvents, api.CreateRoomStateEvent{
 				Type:    "m.room.topic",
 				Content: api.RoomTopicEventContent{Topic: topicRaw.(string)},
 			})
 		}
 		if guestsAllowed {
+			log.Println("[DEBUG] Including room guest access state event (can_join)")
 			stateEvents = append(stateEvents, api.CreateRoomStateEvent{
 				Type:    "m.room.guest_access",
 				Content: api.RoomGuestAccessEventContent{Policy: "can_join"},
 			})
 		} else {
+			log.Println("[DEBUG] Including room guest access state event (forbidden)")
 			stateEvents = append(stateEvents, api.CreateRoomStateEvent{
 				Type:    "m.room.guest_access",
 				Content: api.RoomGuestAccessEventContent{Policy: "forbidden"},
@@ -147,6 +152,7 @@ func resourceRoomCreate(d *schema.ResourceData, m interface{}) error {
 
 		response := &api.RoomIdResponse{}
 		urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/createRoom")
+		log.Println("[DEBUG] Creating room:", urlStr)
 		err := api.DoRequest("POST", urlStr, request, response, memberAccessToken)
 		if err != nil {
 			return fmt.Errorf("error creating room: %s", err)
@@ -168,11 +174,12 @@ func resourceRoomExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	roomIdRaw := nilIfEmptyString(d.Get("room_id"))
 
 	if roomIdRaw == nil {
+		log.Println("[DEBUG] Considering room deleted, no room ID")
 		return false, nil
 	}
 
 	// First identify who the user is
-	log.Println("[DEBUG] Doing whoami on: ", d.Id())
+	log.Println("[DEBUG] Doing whoami on:", d.Id())
 	urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/account/whoami")
 	whoAmIResponse := &api.WhoAmIResponse{}
 	err := api.DoRequest("GET", urlStr, nil, whoAmIResponse, memberAccessToken)
@@ -184,6 +191,7 @@ func resourceRoomExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	// Now that we have user's ID, let's make sure they are a member
 	memberEventResponse := &api.RoomMemberEventContent{}
 	urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms", roomIdRaw.(string), "/state/m.room.member/", whoAmIResponse.UserId)
+	log.Println("[DEBUG] Ensuring user is in room:", urlStr)
 	err = api.DoRequest("GET", urlStr, nil, memberEventResponse, memberAccessToken)
 	if err != nil {
 		// An error accessing the room means it doesn't exist anymore
@@ -209,6 +217,7 @@ func resourceRoomRead(d *schema.ResourceData, m interface{}) error {
 
 	nameResponse := &api.RoomNameEventContent{}
 	urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomIdRaw.(string), "/state/m.room.name")
+	log.Println("[DEBUG] Getting room name:", urlStr)
 	err := api.DoRequest("GET", urlStr, nil, nameResponse, memberAccessToken)
 	if err != nil {
 		if r, ok := err.(*api.ErrorResponse); !ok || r.StatusCode != http.StatusNotFound {
@@ -218,6 +227,7 @@ func resourceRoomRead(d *schema.ResourceData, m interface{}) error {
 
 	avatarResponse := &api.RoomAvatarEventContent{}
 	urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomIdRaw.(string), "/state/m.room.avatar")
+	log.Println("[DEBUG] Getting room avatar:", urlStr)
 	err = api.DoRequest("GET", urlStr, nil, avatarResponse, memberAccessToken)
 	if err != nil {
 		if r, ok := err.(*api.ErrorResponse); !ok || r.StatusCode != http.StatusNotFound {
@@ -227,6 +237,7 @@ func resourceRoomRead(d *schema.ResourceData, m interface{}) error {
 
 	topicResponse := &api.RoomTopicEventContent{}
 	urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomIdRaw.(string), "/state/m.room.topic")
+	log.Println("[DEBUG] Getting room topic:", urlStr)
 	err = api.DoRequest("GET", urlStr, nil, topicResponse, memberAccessToken)
 	if err != nil {
 		if r, ok := err.(*api.ErrorResponse); !ok || r.StatusCode != http.StatusNotFound {
@@ -236,6 +247,7 @@ func resourceRoomRead(d *schema.ResourceData, m interface{}) error {
 
 	guestResponse := &api.RoomGuestAccessEventContent{}
 	urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomIdRaw.(string), "/state/m.room.guest_access")
+	log.Println("[DEBUG] Getting room guest access:", urlStr)
 	err = api.DoRequest("GET", urlStr, nil, guestResponse, memberAccessToken)
 	if err != nil {
 		if r, ok := err.(*api.ErrorResponse); !ok || r.StatusCode != http.StatusNotFound {
@@ -245,6 +257,7 @@ func resourceRoomRead(d *schema.ResourceData, m interface{}) error {
 
 	creatorResponse := &api.RoomCreateEventContent{}
 	urlStr = api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms/", roomIdRaw.(string), "/state/m.room.create")
+	log.Println("[DEBUG] Getting room create event:", urlStr)
 	err = api.DoRequest("GET", urlStr, nil, creatorResponse, memberAccessToken)
 	if err != nil {
 		if r, ok := err.(*api.ErrorResponse); !ok || r.StatusCode != http.StatusNotFound {
@@ -280,6 +293,7 @@ func resourceRoomUpdate(d *schema.ResourceData, m interface{}) error {
 		request := &api.RoomNameEventContent{Name: d.Get("name").(string)}
 		response := &api.EventIdResponse{}
 		urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms", roomIdRaw.(string), "/state/m.room.name")
+		log.Println("[DEBUG] Updating room name:", urlStr)
 		err := api.DoRequest("PUT", urlStr, request, response, memberAccessToken)
 		if err != nil {
 			return err
@@ -290,6 +304,7 @@ func resourceRoomUpdate(d *schema.ResourceData, m interface{}) error {
 		request := &api.RoomAvatarEventContent{AvatarMxc: d.Get("avatar_mxc").(string)}
 		response := &api.EventIdResponse{}
 		urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms", roomIdRaw.(string), "/state/m.room.avatar")
+		log.Println("[DEBUG] Updating room avatar:", urlStr)
 		err := api.DoRequest("PUT", urlStr, request, response, memberAccessToken)
 		if err != nil {
 			return err
@@ -300,6 +315,7 @@ func resourceRoomUpdate(d *schema.ResourceData, m interface{}) error {
 		request := &api.RoomTopicEventContent{Topic: d.Get("topic").(string)}
 		response := &api.EventIdResponse{}
 		urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms", roomIdRaw.(string), "/state/m.room.topic")
+		log.Println("[DEBUG] Updating room topic:", urlStr)
 		err := api.DoRequest("PUT", urlStr, request, response, memberAccessToken)
 		if err != nil {
 			return err
@@ -314,6 +330,7 @@ func resourceRoomUpdate(d *schema.ResourceData, m interface{}) error {
 		request := &api.RoomGuestAccessEventContent{Policy: policy}
 		response := &api.EventIdResponse{}
 		urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/rooms", roomIdRaw.(string), "/state/m.room.guest_access")
+		log.Println("[DEBUG] Updating room guest access policy:", urlStr)
 		err := api.DoRequest("PUT", urlStr, request, response, memberAccessToken)
 		if err != nil {
 			return err

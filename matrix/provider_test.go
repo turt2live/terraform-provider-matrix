@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 	"github.com/turt2live/terraform-provider-matrix/matrix/api"
+	"log"
 )
 
 type test_MatrixUser struct {
@@ -65,6 +66,7 @@ func testAccAdminToken() string {
 func testAccCreateTestUser(localpart string) (*test_MatrixUser) {
 	existing := test_MatrixUser_users[localpart]
 	if existing != nil {
+		log.Println("[DEBUG] User already exists, returning cached copy:", localpart)
 		return existing
 	}
 
@@ -73,11 +75,13 @@ func testAccCreateTestUser(localpart string) (*test_MatrixUser) {
 	displayName := "!!TEST USER!!"
 	avatarMxc := "mxc://domain.com/SomeAvatarUrl"
 
+	log.Println("[DEBUG] Attempting to register user:", localpart)
 	r, e := api.DoRegister(csApiUrl, localpart, password, "user")
 	if e != nil {
 		panic(e)
 	}
 
+	log.Println("[DEBUG] Updating profile for:", localpart)
 	response := &api.ProfileUpdateResponse{}
 	nameRequest := &api.ProfileDisplayNameRequest{DisplayName: displayName}
 	urlStr := api.MakeUrl(csApiUrl, "/_matrix/client/r0/profile/", r.UserId, "/displayname")

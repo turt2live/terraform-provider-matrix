@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"encoding/json"
 	"errors"
+	"log"
 )
 
 const AuthTypeDummy = "m.login.dummy"
@@ -13,6 +14,7 @@ func DoRegister(csApiUrl string, username string, password string, kind string) 
 	urlStr := MakeUrlQueryString(qs, csApiUrl, "/_matrix/client/r0/register")
 
 	// First we do a request to get the flows we can use
+	log.Println("[DEBUG] Getting registration flows")
 	request := &RegisterRequest{}
 	state, _, err := doUiAuthRegisterRequest(urlStr, request)
 	if err != nil {
@@ -32,6 +34,7 @@ func DoRegister(csApiUrl string, username string, password string, kind string) 
 	}
 
 	// We have a dummy stage, so we can expect to be able to register now
+	log.Println("[DEBUG] Using dummy registration flow to register user")
 	request = &RegisterRequest{
 		Authentication: &RegisterAuthenticationData{
 			Type:    AuthTypeDummy,

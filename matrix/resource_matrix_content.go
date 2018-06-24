@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"log"
 )
 
 func resourceContent() *schema.Resource {
@@ -87,6 +88,8 @@ func resourceContentCreate(d *schema.ResourceData, m interface{}) error {
 			return fmt.Errorf("media_id mismatch while creating object. expected: '%s'  got: '%s'", mediaIdRaw, mediaId)
 		}
 
+		log.Println("[DEBUG] Creating media object from existing parameters - no upload required")
+
 		d.SetId(mxc)
 		d.Set("origin", origin)
 		d.Set("media_id", mediaId)
@@ -94,6 +97,8 @@ func resourceContentCreate(d *schema.ResourceData, m interface{}) error {
 		if meta.DefaultAccessToken == "" {
 			return fmt.Errorf("a default access token is required to upload content")
 		}
+
+		log.Println("[DEBUG] Uploading media to create media object")
 
 		f, err := os.Open(filePathRaw.(string))
 		if err != nil {
@@ -131,6 +136,7 @@ func resourceContentCreate(d *schema.ResourceData, m interface{}) error {
 		d.Set("media_id", mediaId)
 	}
 
+	log.Println("[DEBUG] MXC URI =", d.Id())
 	return resourceContentRead(d, meta)
 }
 
@@ -140,12 +146,14 @@ func resourceContentExists(d *schema.ResourceData, m interface{}) (bool, error) 
 	origin := d.Get("origin").(string)
 	mediaId := d.Get("media_id").(string)
 
+	log.Println("[DEBUG] Checking to see if media exists")
 	stream, _, err := api.DownloadFile(meta.ClientApiUrl, origin, mediaId)
 	if stream != nil {
 		defer (*stream).Close()
 		io.Copy(ioutil.Discard, *stream)
 	}
 	if err != nil {
+		log.Println("[DEBUG] Error downloading meda, assuming deleted:", err)
 		return false, nil
 	}
 

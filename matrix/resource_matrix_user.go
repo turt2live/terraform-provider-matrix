@@ -66,7 +66,7 @@ func resourceUserCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if passwordRaw != nil {
-		log.Printf("[DEBUG] User create: %s", usernameRaw.(string))
+		log.Println("[DEBUG] User register:", usernameRaw.(string))
 		response, err := api.DoRegister(meta.ClientApiUrl, usernameRaw.(string), passwordRaw.(string), "user")
 		if err != nil {
 			if r, ok := err.(*api.ErrorResponse); ok && r.ErrorCode == api.ErrCodeUserInUse {
@@ -76,6 +76,7 @@ func resourceUserCreate(d *schema.ResourceData, m interface{}) error {
 					Password: passwordRaw.(string),
 				}
 				urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/login")
+				log.Println("[DEBUG] Logging in:", usernameRaw.(string))
 				response := &api.LoginResponse{}
 				err2 := api.DoRequest("POST", urlStr, request, response, "")
 				if err2 != nil {
@@ -92,7 +93,7 @@ func resourceUserCreate(d *schema.ResourceData, m interface{}) error {
 			d.Set("access_token", response.AccessToken)
 		}
 	} else {
-		log.Printf("[DEBUG] User whoami")
+		log.Println("[DEBUG] User whoami")
 		response := &api.WhoAmIResponse{}
 		urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/account/whoami")
 		err := api.DoRequest("GET", urlStr, nil, response, accessTokenRaw.(string))
@@ -118,7 +119,7 @@ func resourceUserExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	meta := m.(Metadata)
 
 	accessToken := d.Get("access_token").(string)
-	log.Printf("[DEBUG] Doing whoami on: %s ", d.Id())
+	log.Println("[DEBUG] Doing whoami on:", d.Id())
 	urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/account/whoami")
 	response := &api.WhoAmIResponse{}
 	err := api.DoRequest("GET", urlStr, nil, response, accessToken)
@@ -144,8 +145,8 @@ func resourceUserRead(d *schema.ResourceData, m interface{}) error {
 	userId := d.Id()
 	accessToken := d.Get("access_token").(string)
 
-	log.Printf("[DEBUG] Getting user profile: %s", userId)
 	urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/profile/", userId)
+	log.Println("[DEBUG] Getting user profile:", urlStr)
 	response := &api.ProfileResponse{}
 	err := api.DoRequest("GET", urlStr, nil, response, accessToken)
 	if err != nil {
@@ -198,6 +199,7 @@ func resourceUserSetDisplayName(d *schema.ResourceData, meta Metadata, newDispla
 	response := &api.ProfileUpdateResponse{}
 	request := &api.ProfileDisplayNameRequest{DisplayName: newDisplayName}
 	urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/profile/", userId, "/displayname")
+	log.Println("[DEBUG] Updating user display name:", urlStr)
 	err := api.DoRequest("PUT", urlStr, request, response, accessToken)
 	if err != nil {
 		return err
@@ -213,6 +215,7 @@ func resourceUserSetAvatarMxc(d *schema.ResourceData, meta Metadata, newAvatarMx
 	response := &api.ProfileUpdateResponse{}
 	request := &api.ProfileAvatarUrlRequest{AvatarMxc: newAvatarMxc}
 	urlStr := api.MakeUrl(meta.ClientApiUrl, "/_matrix/client/r0/profile/", userId, "/avatar_url")
+	log.Println("[DEBUG] Updating user avatar:", urlStr)
 	err := api.DoRequest("PUT", urlStr, request, response, accessToken)
 	if err != nil {
 		return err

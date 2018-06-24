@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"fmt"
 	"io"
+	"log"
 )
 
 var matrixHttpClient = &http.Client{
@@ -36,6 +37,7 @@ func UploadFile(csApiUrl string, content []byte, name string, mime string, acces
 		qs["filename"] = name
 	}
 	urlStr := MakeUrlQueryString(qs, csApiUrl, "/_matrix/media/r0/upload")
+	log.Println("[DEBUG] Performing upload:", urlStr)
 	result := &ContentUploadResponse{}
 	err := doRawRequest("POST", urlStr, content, mime, result, accessToken)
 	return result, err
@@ -43,6 +45,7 @@ func UploadFile(csApiUrl string, content []byte, name string, mime string, acces
 
 func DownloadFile(csApiUrl string, origin string, mediaId string) (*io.ReadCloser, http.Header, error) {
 	urlStr := MakeUrl(csApiUrl, "/_matrix/media/r0/download", origin, mediaId)
+	log.Println("[DEBUG] Performing download:", urlStr)
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
 		return nil, nil, err
@@ -61,6 +64,7 @@ func DownloadFile(csApiUrl string, origin string, mediaId string) (*io.ReadClose
 }
 
 func doRawRequest(method string, urlStr string, bodyBytes []byte, contentType string, result interface{}, accessToken string) (error) {
+	log.Println("[DEBUG]", method, urlStr)
 	req, err := http.NewRequest(method, urlStr, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return err
