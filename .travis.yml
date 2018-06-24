@@ -14,5 +14,5 @@ install:
   - dep ensure -v
   - docker build -t terraform-provider-matrix-tests .
 script:
-  - docker run --name terraform-provider-matrix-tests terraform-provider-matrix-tests
+  - docker run --rm --name terraform-provider-matrix-tests terraform-provider-matrix-tests
   - go build -o terraform-provider-matrix

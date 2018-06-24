@@ -2,6 +2,7 @@
 
 [![#terraform:t2bot.io](https://img.shields.io/badge/matrix-%23terraform:t2bot.io-brightgreen.svg)](https://matrix.to/#/#terraform:t2bot.io)
 [![TravisCI badge](https://travis-ci.org/turt2live/terraform-provider-matrix.svg?branch=master)](https://travis-ci.org/turt2live/terraform-provider-matrix)
+[![AppVeyor badge](https://ci.appveyor.com/api/projects/status/github/turt2live/terraform-provider-matrix?branch=master&svg=true)](https://ci.appveyor.com/project/turt2live/terraform-provider-matrix)
 
 Terraform your matrix homeserver
 
