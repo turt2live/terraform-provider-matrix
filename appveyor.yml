@@ -10,8 +10,10 @@ environment:
   matrix:
   - GO_DIR: go110
     ARCH: amd64
+    platform: x64
   - GO_DIR: go110-x86
     ARCH: 386
+    platform: x86
 
 branches:
   only: [master, develop]
