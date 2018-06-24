@@ -32,14 +32,15 @@ install:
   - cp dep-windows-amd64.exe c:\dep\dep.exe
   - dep version
   - dep ensure -v
-  - docker build -t terraform-provider-matrix-tests .
+  #- docker build -t terraform-provider-matrix-tests .  # See test_script below for why we don't build the image
 
 build_script:
   - go build -o terraform-provider-matrix-windows-%ARCH%.exe
 
-test_script:
-  - docker run --rm --name terraform-provider-matrix-tests terraform-provider-matrix-tests
+# NOTE: We do not run or build the docker image because AppVeyor does not support linux containers.
+# We'll use Travis CI to do our tests, and leave AppVeyor to the build/release
+#test_script:
+  #- docker run --rm --name terraform-provider-matrix-tests terraform-provider-matrix-tests
 
 artifacts:
-  - path: terraform-provider-matrix-windows-%ARCH%.exe
-    #name: media_repo.exe
+  - path: terraform-provider-matrix-windows-*.exe
