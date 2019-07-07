@@ -12,7 +12,6 @@ ENV SYNAPSE_MACAROON_SECRET_KEY="macaroon-secret-test1234"
 RUN mkdir -p /project/src/github.com/turt2live/terraform-provider-matrix
 RUN mkdir -p /project/bin
 ENV GOPATH="/project"
-RUN curl -fsSL -o /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 && chmod +x /usr/local/bin/dep
 
 COPY /.docker/run-tests.sh /run-tests.sh
 RUN chmod +x /run-tests.sh && dos2unix /run-tests.sh

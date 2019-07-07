@@ -2,33 +2,27 @@ version: 2
 jobs:
   build_linux_amd64:
     environment:
-      - DEP_VERSION: 0.4.1
       - ARCH: linux-amd64
       - GOARCH: amd64
     docker:
-      - image: circleci/golang:1.10
+      - image: circleci/golang:1.12
     working_directory: /go/src/github.com/turt2live/terraform-provider-matrix
     steps:
       - checkout
-      - run: curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
-      - run: chmod +x $GOPATH/bin/dep
-      - run: dep ensure -v
+      - run: go vet
       - run: go build -o bin/terraform-provider-matrix-${ARCH}
       - store_artifacts:
           path: bin/
   build_linux_386:
     environment:
-      - DEP_VERSION: 0.4.1
       - ARCH: linux-386
       - GOARCH: 386
     docker:
-      - image: circleci/golang:1.10
+      - image: circleci/golang:1.12
     working_directory: /go/src/github.com/turt2live/terraform-provider-matrix
     steps:
       - checkout
-      - run: curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
-      - run: chmod +x $GOPATH/bin/dep
-      - run: dep ensure -v
+      - run: go vet
       - run: go build -o bin/terraform-provider-matrix-${ARCH}
       - store_artifacts:
           path: bin/

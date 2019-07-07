@@ -9,14 +9,11 @@ Terraform your matrix homeserver
 
 ## Building
 
-Assuming Go 1.9 and `dep` are already installed:
+Assuming Go 1.12 is already installed:
 ```bash
 # Get it
 git clone https://github.com/turt2live/terraform-provider-matrix
 cd terraform-provider-matrix
-
-# Grab the dependencies
-dep ensure
 
 # Build it
 go build -o terraform-provider-matrix

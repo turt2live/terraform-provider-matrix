@@ -5,13 +5,12 @@ clone_folder: c:\gopath\src\github.com\turt2live\teraform-provider-matrix
 
 environment:
   GOPATH: c:\gopath
-  DEP_VERSION: 0.4.1
   TF_LOG: DEBUG
   matrix:
-  - GO_DIR: go110
+  - GO_DIR: go112
     ARCH: amd64
     platform: x64
-  - GO_DIR: go110-x86
+  - GO_DIR: go112-x86
     ARCH: 386
     platform: x86
 
@@ -24,17 +23,12 @@ init:
   - git config --global core.autocrlf input
 
 install:
-  - mkdir c:\dep
-  - set PATH=c:\%GO_DIR\bin;c:\gopath\bin;c:\dep;%PATH%
+  - set PATH=c:\%GO_DIR\bin;c:\gopath\bin;%PATH%
   - go version
   - go env
-  - appveyor DownloadFile https://github.com/golang/dep/releases/download/v%DEP_VERSION%/dep-windows-amd64.exe
-  - cp dep-windows-amd64.exe c:\dep\dep.exe
-  - dep version
-  - dep ensure -v
-  #- docker build -t terraform-provider-matrix-tests .  # See test_script below for why we don't build the image
 
 build_script:
+  - go vet
   - go build -o terraform-provider-matrix-windows-%ARCH%.exe
 
 # NOTE: We do not run or build the docker image because AppVeyor does not support linux containers.
