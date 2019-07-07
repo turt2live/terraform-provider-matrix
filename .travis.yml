@@ -1,10 +1,11 @@
-dist: trusty
+dist: xenial
 language: go
 go:
   - 1.12
 env:
   # We want to make sure we have as much information as possible when the tests explode
   - TF_LOG=DEBUG
+  - GO111MODULE=on
 services:
   - docker
 install:
