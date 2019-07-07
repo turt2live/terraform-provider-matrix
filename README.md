@@ -15,6 +15,9 @@ Assuming Go 1.12 is already installed:
 git clone https://github.com/turt2live/terraform-provider-matrix
 cd terraform-provider-matrix
 
+# Install dependencies
+go install -v ./...
+
 # Build it
 go build -o terraform-provider-matrix
 ```
