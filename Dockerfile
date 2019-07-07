@@ -1,17 +1,28 @@
-FROM docker.io/matrixdotorg/synapse:v0.31.2
+FROM docker.io/matrixdotorg/synapse:v1.1.0
 
-RUN apk add --no-cache go curl ca-certificates dos2unix git jq
+RUN apk add --no-cache gcc musl-dev openssl go curl ca-certificates dos2unix git jq
 
-ENV SYNAPSE_SERVER_NAME="localhost"
-ENV SYNAPSE_REPORT_STATS="no"
-ENV SYNAPSE_ENABLE_REGISTRATION="true"
-ENV SYNAPSE_ALLOW_GUEST="true"
-ENV SYNAPSE_REGISTRATION_SHARED_SECRET="shared-secret-test1234"
-ENV SYNAPSE_MACAROON_SECRET_KEY="macaroon-secret-test1234"
+RUN wget -O go.tgz https://dl.google.com/go/go1.12.6.src.tar.gz
+RUN tar -C /usr/local -xzf go.tgz
+WORKDIR /usr/local/go/src/
+RUN sh ./make.bash
+ENV GOPATH="/opt/go"
+ENV PATH="/usr/local/go/bin:$GOPATH/bin:$PATH"
+RUN go version
+RUN env
+
+ENV SYNAPSE_CONFIG_DIR=/synapse
+ENV SYNAPSE_CONFIG_PATH=/synapse/homeserver.yaml
+ENV UID 991
+ENV GID 991
+
+RUN mkdir -p /synapse
+COPY .docker/synapse /synapse
+RUN chown -R 991:991 /synapse
 
 RUN mkdir -p /project/src/github.com/turt2live/terraform-provider-matrix
-RUN mkdir -p /project/bin
-ENV GOPATH="/project"
+ENV GOPATH="$GOPATH:/project:/project/src/github.com/turt2live/terraform-provider-matrix/vendor"
+ENV GO111MODULE=on
 
 COPY /.docker/run-tests.sh /run-tests.sh
 RUN chmod +x /run-tests.sh && dos2unix /run-tests.sh

@@ -1,7 +1,0 @@
-*
-!.docker
-!*.go
-!Gopkg.*
-!matrix
-!vendor
-!.test_data

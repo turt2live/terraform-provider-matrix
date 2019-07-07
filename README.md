@@ -30,8 +30,7 @@ leave lingering data on another homeserver.
 The tests can be run with `./run-tests.sh` or by running the following commands:
 ```
 docker build -t terraform-provider-matrix-tests .
-docker run --name terraform-provider-matrix-tests terraform-provider-matrix-tests
-docker rm terraform-provider-matrix-tests
+docker run --rm -it --name terraform-provider-matrix-tests terraform-provider-matrix-tests
 ```
 
 The first execution may take a while to set up, however future executions should be

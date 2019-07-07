@@ -1,0 +1,46 @@
+server_name: "localhost"
+pid_file: /homeserver.pid
+federation_ip_range_blacklist:
+  - '0.0.0.0/1'
+  - '128.0.0.0/2'
+  - '192.0.0.0/3'
+  - '224.0.0.0/4'
+listeners:
+  - port: 8008
+    tls: false
+    bind_addresses: ['127.0.0.1']
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+        compress: false
+database:
+  name: "sqlite3"
+  args:
+    database: "/synapse/homeserver.db"
+log_config: "/synapse/localhost.log.config"
+media_store_path: "/synapse/media_store"
+uploads_path: "/synapse/uploads"
+registration_shared_secret: "registration-shared-secret-test1234"
+report_stats: false
+macaroon_secret_key: "macaroon-secret-key-test1234"
+form_secret: "form-secret-test1234"
+signing_key_path: "/synapse/localhost.signing.key"
+enable_registration: true
+allow_guest_access: true
+rc_message:
+  per_second: 1000000
+  burst_count: 1000000
+rc_registration:
+  per_second: 1000000
+  burst_count: 1000000
+rc_login:
+  address:
+    per_second: 1000000
+    burst_count: 1000000
+  account:
+    per_second: 1000000
+    burst_count: 1000000
+  failed_attempts:
+    per_second: 1000000
+    burst_count: 1000000
