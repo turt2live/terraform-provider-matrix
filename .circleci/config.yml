@@ -9,7 +9,7 @@ jobs:
     working_directory: /go/src/github.com/turt2live/terraform-provider-matrix
     steps:
       - checkout
-      - run: go install -v ./...
+      - run: go install -v ...
       - run: go vet
       - run: go build -o bin/terraform-provider-matrix-${ARCH}
       - store_artifacts:
@@ -23,7 +23,7 @@ jobs:
     working_directory: /go/src/github.com/turt2live/terraform-provider-matrix
     steps:
       - checkout
-      - run: go install -v ./...
+      - run: go install -v ...
       - run: go vet
       - run: go build -o bin/terraform-provider-matrix-${ARCH}
       - store_artifacts:

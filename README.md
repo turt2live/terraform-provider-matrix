@@ -16,10 +16,10 @@ git clone https://github.com/turt2live/terraform-provider-matrix
 cd terraform-provider-matrix
 
 # Install dependencies
-go install -v ./...
+go install -v ...
 
 # Build it
-go build -o terraform-provider-matrix
+go build -v -o terraform-provider-matrix
 ```
 
 ## Running the tests

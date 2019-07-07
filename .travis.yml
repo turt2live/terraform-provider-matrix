@@ -8,7 +8,7 @@ env:
 services:
   - docker
 install:
-  - go install -v ./...
+  - go install -v ...
   - docker build -t terraform-provider-matrix-tests .
 script:
   - go vet
