@@ -6,7 +6,7 @@ jobs:
       - GOARCH: amd64
     docker:
       - image: circleci/golang:1.12
-    working_directory: /go/src/github.com/turt2live/terraform-provider-matrix
+    working_directory: /go/github.com/turt2live/terraform-provider-matrix
     steps:
       - checkout
       - run: go install -v ...
@@ -20,7 +20,7 @@ jobs:
       - GOARCH: 386
     docker:
       - image: circleci/golang:1.12
-    working_directory: /go/src/github.com/turt2live/terraform-provider-matrix
+    working_directory: /go/github.com/turt2live/terraform-provider-matrix
     steps:
       - checkout
       - run: go install -v ...
